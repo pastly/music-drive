@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import os
 import sys
 import glob
@@ -43,12 +44,15 @@ ARTISTS = {
     'Wolfmother',
 }
 
+
 def fatal(*a, **kw):
     error(*a, **kw)
     exit(1)
 
+
 def error(*a, **kw):
     _log('E:', *a, **kw)
+
 
 def info(*a, **kw):
     _log('I:', *a, **kw)
@@ -57,6 +61,7 @@ def info(*a, **kw):
 def count(cur, top, *a, **kw):
     _log(f'{cur}/{top}', *a, **kw)
 
+
 def _log(*a, **kw):
     print(*a, file=sys.stderr, **kw)
 
@@ -64,7 +69,6 @@ def _log(*a, **kw):
 def find_input_files(dname, artists):
     if not os.path.isdir(dname):
         fatal(f'{dname} does not exist')
-    all_files = set()
     return {
             item
             for artist in artists
@@ -83,7 +87,11 @@ def gen_output_map(input_files, out_dname):
     return out
 
 
-def main():
+def main(library_dname, drive_dname):
+    pass
+
+
+def foo():
     input_files = find_input_files(INPUT_ROOT, ARTISTS)
     info(f'Found {len(input_files)} input files')
     output_map = gen_output_map(input_files, OUTPUT_ROOT)
@@ -92,13 +100,20 @@ def main():
     for in_fname, out_fname in output_map.items():
         counter += 1
         if os.path.exists(out_fname):
-             if os.path.getsize(in_fname) == os.path.getsize(out_fname):
-                 count(counter, counter_max, f'{out_fname} exists, skipping')
-                 continue
-        count(counter, counter_max, f'Copying {os.path.basename(in_fname)} -> {out_fname}')
+            if os.path.getsize(in_fname) == os.path.getsize(out_fname):
+                count(counter, counter_max, f'{out_fname} exists, skipping')
+                continue
+        count(
+            counter, counter_max,
+            f'Copying {os.path.basename(in_fname)} -> {out_fname}')
         shutil.copy2(in_fname, out_fname)
         os.sync()
 
 
 if __name__ == '__main__':
-    main()
+    p = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    p.add_argument('library', help='Path to root folder of music library')
+    p.add_argument(
+        'drive_folder', help='Path to folder on flash drive to manage')
+    args = p.parse_args()
+    exit(main(args.library, args.drive_folder))
