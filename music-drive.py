@@ -22,7 +22,7 @@ class Filter:
         yield from glob.iglob(self.glob, recursive=True)
 
     def should_include(self, fname: str):
-        if self.re.fullmatch(fname):
+        if self.re.match(fname):
             return not self.is_negative
         return None
 
@@ -89,6 +89,8 @@ def gen_input_files(filters, library):
         recursive=True)
     info(f'Scanning over all files in {library}')
     for fname in all_files:
+        if os.path.isdir(fname):
+            continue
         for filt in filters:
             ret = filt.should_include(fname)
             if ret:
