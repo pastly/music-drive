@@ -117,9 +117,9 @@ def hash_file(fname: str):
 def copy_file(input_fname, out_fname):
     os.makedirs(os.path.dirname(out_fname), exist_ok=True)
     if os.path.exists(out_fname):
-        info(f'Skipping {out_fname}.')
+        info(f'Skipping {out_fname}')
     else:
-        info(f'Copying {input_fname} -> {out_fname}')
+        info(f'Copying  {out_fname}')
         shutil.copy2(input_fname, out_fname)
 
 
