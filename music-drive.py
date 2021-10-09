@@ -27,41 +27,6 @@ class Filter:
         return None
 
 
-ARTISTS = {
-    'AC-DC',
-    'Alice in Chains',
-    'Black Sabbath',
-    'Cake',
-    'Chvrches',
-    'Cold War Kids',
-    'Green Day',
-    'Jack White',
-    'Jimi Hendrix',
-    'Led Zeppelin',
-    'Metallica',
-    'Nirvana',
-    'Ozzy Osbourne',
-    # 'Pearl Jam',
-    'Pink Floyd',
-    'Queens of the Stone Age',
-    'Radio Moscow',
-    'Rage Against the Machine',
-    'Rush',
-    'Scars on Broadway',
-    'Stone Temple Pilots',
-    'System of a Down',
-    'The Black Crowes',
-    'The Black Keys',
-    'The Dead Weather',
-    'Them Crooked Vultures',
-    'The Pretty Reckless',
-    'The Raconteurs',
-    'The White Stripes',
-    'Weezer',
-    'Wolfmother',
-}
-
-
 def fatal(*a, **kw):
     error(*a, **kw)
     exit(1)
