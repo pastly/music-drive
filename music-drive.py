@@ -10,12 +10,14 @@ from itertools import chain
 
 
 class Filter:
-    def __init__(self, s: str, root: str):
+    def __init__(self, s: str, d: str, root: str):
         self.is_negative = s.startswith('!')
         if self.is_negative:
             s = s[1:]
         self.glob = os.path.join(root, s)
         self.items = {_ for _ in self._items()}
+        self.is_organized = d != 'shuffled'
+        self.is_shuffled = d != 'organized'
 
     def _items(self):
         yield from glob.iglob(self.glob, recursive=True)
@@ -91,7 +93,7 @@ def gen_input_files(filters, library):
         for filt in filters:
             ret = filt.should_include(fname)
             if ret:
-                yield fname
+                yield fname, (filt.is_organized, filt.is_shuffled)
                 break
             elif ret is False:
                 break
@@ -130,26 +132,35 @@ def main(
     with open(include_fname, 'rt') as fd:
         for line in fd:
             line = line.strip()
-            debug(f'Loading filter {line}')
-            filters.append(Filter(line, library_dname))
+            if not line or line.startswith('#'):
+                continue
+            words = line.split('\t')
+            assert len(words) in {1, 2}
+            f = words[0]
+            d = words[1] if len(words) == 2 else 'both'
+            assert d in {'both', 'organized', 'shuffled'}
+            debug(f'Loading filter {f}')
+            filters.append(Filter(f, d, library_dname))
     input_files_gen = gen_input_files(filters, library_dname)
     included_files = set()
-    for input_fname in input_files_gen:
+    for input_fname, (is_organized, is_shuffled) in input_files_gen:
         partial_fname = input_fname[
                 len(os.path.commonpath([library_dname, input_fname])):]
         if partial_fname.startswith('/'):
             partial_fname = partial_fname[1:]
         # Copy to organized dir
-        out_fname = os.path.join(organized_dname, partial_fname)
-        copy_file(input_fname, out_fname)
-        included_files.add(out_fname)
+        if is_organized:
+            out_fname = os.path.join(organized_dname, partial_fname)
+            copy_file(input_fname, out_fname)
+            included_files.add(out_fname)
         # Copy to shuffled dir
-        split = os.path.splitext(os.path.basename(input_fname))
-        out_fname = os.path.join(
-            shuffled_dname,
-            f'{split[0]} - {hash_file(input_fname)[:8]}{split[1]}')
-        copy_file(input_fname, out_fname)
-        included_files.add(out_fname)
+        if is_shuffled:
+            split = os.path.splitext(os.path.basename(input_fname))
+            out_fname = os.path.join(
+                shuffled_dname,
+                f'{split[0]} - {hash_file(input_fname)[:8]}{split[1]}')
+            copy_file(input_fname, out_fname)
+            included_files.add(out_fname)
     # Delete music files that didn't match any input library files
     if delete_excluded_files:
         for fname in chain(
@@ -157,8 +168,10 @@ def main(
                     os.path.join(organized_dname, '**'), recursive=True),
                 glob.iglob(
                     os.path.join(shuffled_dname, '**'), recursive=True)):
+            # Don't try to delete directories
             if not os.path.isfile(fname):
                 continue
+            # Don't delete files that were included
             if fname in included_files:
                 continue
             debug(f'Deleting {fname}')
