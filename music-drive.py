@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import os
+import re
 import sys
 import glob
 import shutil
 from hashlib import sha1
-from functools import lru_cache
 from itertools import chain
 
 
@@ -14,8 +14,7 @@ class Filter:
         self.is_negative = s.startswith('!')
         if self.is_negative:
             s = s[1:]
-        self.glob = os.path.join(root, s)
-        self.items = {_ for _ in self._items()}
+        self.re = re.compile(os.path.join(re.escape(root), s))
         self.is_organized = d != 'shuffled'
         self.is_shuffled = d != 'organized'
 
@@ -23,7 +22,7 @@ class Filter:
         yield from glob.iglob(self.glob, recursive=True)
 
     def should_include(self, fname: str):
-        if fname in self.items:
+        if self.re.fullmatch(fname):
             return not self.is_negative
         return None
 
@@ -101,17 +100,8 @@ def gen_input_files(filters, library):
             assert ret is None
 
 
-@lru_cache(maxsize=128)
-def hash_file(fname: str):
-    # debug('Hashing', fname)
-    h = sha1()
-    with open(fname, 'rb') as fd:
-        while True:
-            data = fd.read(4096)
-            if not data:
-                break
-            h.update(data)
-    return h.hexdigest()
+def hash_string(s: str):
+    return sha1(s.encode('utf-8')).hexdigest()
 
 
 def copy_file(input_fname, out_fname):
@@ -158,7 +148,7 @@ def main(
             split = os.path.splitext(os.path.basename(input_fname))
             out_fname = os.path.join(
                 shuffled_dname,
-                f'{split[0]} - {hash_file(input_fname)[:8]}{split[1]}')
+                f'{split[0]} - {hash_string(input_fname)[:8]}{split[1]}')
             copy_file(input_fname, out_fname)
             included_files.add(out_fname)
     # Delete music files that didn't match any input library files
