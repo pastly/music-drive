@@ -133,6 +133,7 @@ def main(
                 continue
             debug(f'Deleting {fname}')
             os.unlink(fname)
+    os.sync()
     return 0
 
 
